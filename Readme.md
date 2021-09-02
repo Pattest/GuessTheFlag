@@ -1,4 +1,4 @@
-# GuessTheFlag
+# Guess the Flag
 
 ## Project
 
