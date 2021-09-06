@@ -22,7 +22,8 @@ struct FlagImage: View {
 
 struct ContentView: View {
     @State private var animationAmount = 0.0
-    @State private var enabled = false
+    @State private var isEnabled = false
+
     @State private var countries = [
         "Estonia",
         "France",
@@ -37,10 +38,7 @@ struct ContentView: View {
         "US"]
         .shuffled()
     @State private var correctAnswer = Int.random(in: 0...2)
-
-    @State private var showingScore = false
     @State private var scoreTitle = ""
-
     @State private var score = 0
 
     var body: some View {
@@ -61,11 +59,11 @@ struct ContentView: View {
 
                 ForEach(0 ..< 3) { number in
                     Button(action: {
+                        isEnabled = true
                         withAnimation {
-                            self.animationAmount += 360
-                            self.enabled = true
+                            animationAmount += 360
                         }
-                        self.flagTapped(number)
+                        flagTapped(number)
                     }) {
                         FlagImage(name: self.countries[number])
                     }
@@ -74,25 +72,32 @@ struct ContentView: View {
                                     animationAmount : 0),
                         axis: (x: 0, y: 1, z: 0)
                     )
-                    .animation(.default)
-                    .opacity(!isCorrectFlag(number) && enabled ?
+                    .opacity(!isCorrectFlag(number) && isEnabled ?
                                 0.25 : 1)
+                    .disabled(isEnabled)
                 }
 
-                Text("Score: \(score)")
+                Text("""
+                    Score: \(score)
+                    \(scoreTitle)
+                    """)
                     .foregroundColor(.white)
                     .fontWeight(.black)
+                    .multilineTextAlignment(.center)
+
+                Button("Next round") {
+                    self.askQuestion()
+                    self.isEnabled = false
+                }
+                .disabled(!isEnabled)
+                .foregroundColor(.white)
+                .font(.title)
+                .padding(7.5)
+                .background(Color.orange)
+                .clipShape(Capsule())
 
                 Spacer()
             }
-        }
-        .alert(isPresented: $showingScore) {
-            Alert(title: Text(scoreTitle),
-                  message: Text("Your score is \(score)"),
-                  dismissButton: .default(Text("Continue")) {
-                    self.askQuestion()
-                    self.enabled = false
-                })
         }
     }
 
@@ -107,11 +112,10 @@ struct ContentView: View {
         } else {
             scoreTitle = "Wrong! That's the flag of \(countries[number])"
         }
-
-        showingScore = true
     }
 
     func askQuestion() {
+        scoreTitle = ""
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
     }
