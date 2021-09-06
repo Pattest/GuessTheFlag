@@ -16,10 +16,13 @@ struct FlagImage: View {
             .clipShape(Capsule())
             .overlay(Capsule().stroke(Color.black, lineWidth: 1))
             .shadow(color: .black, radius: 2)
+            .opacity(1)
     }
 }
 
 struct ContentView: View {
+    @State private var animationAmount = 0.0
+    @State private var enabled = false
     @State private var countries = [
         "Estonia",
         "France",
@@ -58,10 +61,22 @@ struct ContentView: View {
 
                 ForEach(0 ..< 3) { number in
                     Button(action: {
+                        withAnimation {
+                            self.animationAmount += 360
+                            self.enabled = true
+                        }
                         self.flagTapped(number)
                     }) {
                         FlagImage(name: self.countries[number])
                     }
+                    .rotation3DEffect(
+                        .degrees(isCorrectFlag(number) ?
+                                    animationAmount : 0),
+                        axis: (x: 0, y: 1, z: 0)
+                    )
+                    .animation(.default)
+                    .opacity(!isCorrectFlag(number) && enabled ?
+                                0.25 : 1)
                 }
 
                 Text("Score: \(score)")
@@ -76,12 +91,17 @@ struct ContentView: View {
                   message: Text("Your score is \(score)"),
                   dismissButton: .default(Text("Continue")) {
                     self.askQuestion()
+                    self.enabled = false
                 })
         }
     }
 
+    func isCorrectFlag(_ number: Int) -> Bool {
+        return number == correctAnswer
+    }
+
     func flagTapped(_ number: Int) {
-        if number == correctAnswer {
+        if isCorrectFlag(number) {
             scoreTitle = "Correct"
             score += 1
         } else {
